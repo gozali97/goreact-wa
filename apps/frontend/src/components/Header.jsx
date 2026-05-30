@@ -1,6 +1,6 @@
 import { useLocation } from 'react-router-dom'
-import { useAppStore } from '../store/useAppStore.js'
 import { useAuthStore } from '../store/useAuthStore.js'
+import NotificationBell from './NotificationBell.jsx'
 
 const TITLES = {
   '/': { title: 'Hello there 👋', subtitle: 'Welcome back to your dashboard' },
@@ -16,9 +16,7 @@ const TITLES = {
 export default function Header({ onMenu }) {
   const { pathname } = useLocation()
   const meta = TITLES[pathname] || { title: 'WA Proxy', subtitle: '' }
-  const deviceStatus = useAppStore((s) => s.deviceStatus)
   const logout = useAuthStore((s) => s.logout)
-  const connected = deviceStatus === 'connected'
 
   return (
     <header className="flex items-center gap-3 rounded-2xl bg-canvas-soft px-3 py-3 sm:px-4">
@@ -49,15 +47,7 @@ export default function Header({ onMenu }) {
 
       {/* Actions */}
       <div className="flex flex-none items-center gap-2">
-        <button
-          className="relative flex h-10 w-10 items-center justify-center rounded-xl bg-white/5 text-white hover:bg-white/10"
-          aria-label="Notifications"
-        >
-          <span className="icon-[tabler--bell] size-5" />
-          {connected && (
-            <span className="absolute right-2.5 top-2.5 h-2 w-2 rounded-full bg-brand-400" />
-          )}
-        </button>
+        <NotificationBell />
         <button
           onClick={logout}
           className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/5 text-white hover:bg-white/10"

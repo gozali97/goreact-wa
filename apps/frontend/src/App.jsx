@@ -13,6 +13,7 @@ import Storage from './pages/Storage.jsx'
 import wsClient from './lib/ws.js'
 import { useAppStore } from './store/useAppStore.js'
 import { useAuthStore } from './store/useAuthStore.js'
+import { useNotifications } from './store/useNotifications.js'
 import Login from './pages/Login.jsx'
 
 async function loadFlyonUI() {
@@ -24,6 +25,7 @@ export default function App() {
   const queryClient = useQueryClient()
   const { setDeviceStatus, setQrCode, setQrPaired } = useAppStore()
   const isAuthed = useAuthStore((s) => s.isAuthed)
+  const addNotification = useNotifications((s) => s.add)
 
   // Load FlyonUI interactive components once.
   useEffect(() => {
@@ -49,6 +51,20 @@ export default function App() {
       if (data?.status) setDeviceStatus(data.status)
       queryClient.invalidateQueries({ queryKey: ['device-status'] })
       queryClient.invalidateQueries({ queryKey: ['dashboard-stats'] })
+      const labels = {
+        connected: 'WhatsApp connected',
+        connecting: 'WhatsApp connecting…',
+        disconnected: 'WhatsApp disconnected',
+        logged_out: 'WhatsApp logged out',
+      }
+      if (data?.status && labels[data.status]) {
+        addNotification({
+          type: 'device',
+          title: labels[data.status],
+          body: '',
+          to: '/device',
+        })
+      }
     })
 
     const offQr = wsClient.on('qr', (data) => {
@@ -56,13 +72,36 @@ export default function App() {
       if (data?.paired) setQrPaired(true)
     })
 
-    const offMsg = wsClient.on('message.new', () => {
+    const offMsg = wsClient.on('message.new', (data) => {
       queryClient.invalidateQueries({ queryKey: ['conversations'] })
       queryClient.invalidateQueries({ queryKey: ['chat-detail'] })
+      // Only notify for incoming messages (not our own outgoing).
+      if (data?.message?.direction === 'incoming') {
+        const name = data.contact?.name || data.contact?.phone || 'New message'
+        const m = data.message || {}
+        const preview =
+          m.content || (m.message_type ? `[${m.message_type}]` : 'New message')
+        addNotification({
+          type: 'message',
+          title: name,
+          body: preview,
+          to: '/chats',
+        })
+      }
     })
 
-    const offBroadcast = wsClient.on('broadcast.update', () => {
+    const offBroadcast = wsClient.on('broadcast.update', (data) => {
       queryClient.invalidateQueries({ queryKey: ['broadcasts'] })
+      if (data?.status === 'success' || data?.status === 'failed') {
+        addNotification({
+          type: 'broadcast',
+          title: `Broadcast ${data.status}`,
+          body: data.name
+            ? `${data.name} · ✓${data.total_success ?? 0} ✗${data.total_failed ?? 0}`
+            : '',
+          to: '/broadcast',
+        })
+      }
     })
 
     return () => {
@@ -72,7 +111,7 @@ export default function App() {
       offBroadcast()
       wsClient.close()
     }
-  }, [isAuthed, queryClient, setDeviceStatus, setQrCode, setQrPaired])
+  }, [isAuthed, queryClient, setDeviceStatus, setQrCode, setQrPaired, addNotification])
 
   if (!isAuthed) {
     return <Login />
