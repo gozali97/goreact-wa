@@ -1,0 +1,33 @@
+# Binaries
+/bin/
+*.exe
+*.exe~
+wa-proxy
+wa-proxy.bin
+
+# Env
+.env
+*.local
+
+# Storage (runtime media)
+/storage/images/
+/storage/docs/
+/storage/media/
+/storage/*.db
+
+# Logs (daily files)
+/logs/
+
+# Go
+/vendor/
+
+# Node / frontend
+apps/frontend/node_modules/
+apps/frontend/dist/
+internal/webui/dist/
+
+# Editor / OS
+.DS_Store
+.idea/
+.vscode/
+*.log

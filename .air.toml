@@ -1,0 +1,40 @@
+# Air config — live reload for the Go backend.
+#
+# Dev workflow — two options:
+#
+#  A) FAST (recommended): use the Vite dev server for the UI.
+#     Terminal 1 (backend):   air
+#     Terminal 2 (frontend):  cd apps/frontend && npm run dev
+#     -> open http://localhost:5173  (instant hot reload, proxies API to :8080)
+#
+#  B) SINGLE PORT: serve the embedded UI from the Go binary at :8080.
+#     Run `npm run build` in apps/frontend whenever the UI changes; Air watches
+#     the embedded index.html below and re-embeds + restarts automatically.
+#     -> open http://localhost:8080
+
+root = "."
+tmp_dir = "tmp"
+# Load DB / auth / port settings from .env, same as the binary does.
+env_files = [".env"]
+
+[build]
+cmd = "go build -o ./tmp/wa-proxy.exe ./apps/backend"
+bin = "./tmp/wa-proxy.exe"
+# Watch backend Go sources plus the embedded frontend output, so a frontend
+# `npm run build` (which rewrites index.html with new asset hashes) triggers a
+# re-embed + restart of the single-binary server.
+include_dir = ["apps/backend", "internal"]
+include_ext = ["go", "html"]
+exclude_regex = ["_test.go"]
+delay = 800
+stop_on_error = true
+
+[log]
+time = true
+
+[misc]
+clean_on_exit = true
+
+[screen]
+clear_on_rebuild = false
+keep_scroll = true

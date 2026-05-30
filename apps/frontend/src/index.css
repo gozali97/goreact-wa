@@ -1,0 +1,56 @@
+@import "tailwindcss";
+
+@plugin "flyonui";
+@import "flyonui/variants.css";
+@source "../node_modules/flyonui/flyonui.js";
+
+@plugin "@iconify/tailwind4";
+
+/* ─── Theme tokens ─────────────────────────────────────────
+   WhatsApp-green accent + the dark "canvas" used in the
+   reference dashboard. */
+@theme {
+  --color-brand-50: #e7f9ef;
+  --color-brand-100: #c3f0d8;
+  --color-brand-200: #8fe3b6;
+  --color-brand-300: #54d191;
+  --color-brand-400: #25be72;
+  --color-brand-500: #12a85f;
+  --color-brand-600: #0a8a4d;
+  --color-brand-700: #0a6e3f;
+  --color-brand-800: #0b5734;
+  --color-brand-900: #0a472c;
+
+  --color-canvas: #111418;
+  --color-canvas-soft: #1a1f26;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+}
+
+/* Thin, subtle scrollbars to match the clean dashboard look. */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgb(203 213 225) transparent;
+}
+*::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+*::-webkit-scrollbar-thumb {
+  background-color: rgb(203 213 225);
+  border-radius: 9999px;
+}
+.scrollbar-dark {
+  scrollbar-color: rgb(71 85 105) transparent;
+}
+.scrollbar-dark::-webkit-scrollbar-thumb {
+  background-color: rgb(71 85 105);
+}

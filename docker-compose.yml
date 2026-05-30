@@ -1,0 +1,80 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: wa-proxy-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${DB_USER:-waproxy}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-waproxy}
+      POSTGRES_DB: ${DB_NAME:-waproxy}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-waproxy} -d ${DB_NAME:-waproxy}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  wa-proxy:
+    build:
+      context: .
+      dockerfile: deploy/docker/Dockerfile
+    container_name: wa-proxy
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      APP_ENV: production
+      APP_PORT: "8080"
+
+      # Dashboard auth
+      BASIC_AUTH_USERNAME: ${BASIC_AUTH_USERNAME:-admin}
+      BASIC_AUTH_PASSWORD: ${BASIC_AUTH_PASSWORD:-secret123}
+
+      # Database (DB_PORT is the in-network port of the postgres service = 5432)
+      DB_HOST: postgres
+      DB_PORT: "5432"
+      DB_USER: ${DB_USER:-waproxy}
+      DB_PASSWORD: ${DB_PASSWORD:-waproxy}
+      DB_NAME: ${DB_NAME:-waproxy}
+      DB_SSLMODE: disable
+
+      # Storage & logs (mounted volumes below)
+      STORAGE_PATH: /app/storage
+      LOG_PATH: /app/logs
+
+      # Broadcast pacing
+      BROADCAST_MIN_DELAY_MS: ${BROADCAST_MIN_DELAY_MS:-3000}
+      BROADCAST_MAX_DELAY_MS: ${BROADCAST_MAX_DELAY_MS:-8000}
+      BROADCAST_MAX_RETRY: ${BROADCAST_MAX_RETRY:-2}
+
+      # NOTE: the integration API key is managed in the database via the
+      # dashboard (generated on connect, deleted on logout) — no env var.
+
+      # Outbound webhooks (empty URL disables)
+      WEBHOOK_URL: ${WEBHOOK_URL:-}
+      WEBHOOK_SECRET: ${WEBHOOK_SECRET:-}
+      WEBHOOK_MAX_RETRY: ${WEBHOOK_MAX_RETRY:-3}
+      WEBHOOK_EVENTS: ${WEBHOOK_EVENTS:-}
+
+      # Anti-blocking
+      HUMANIZE_SEND: ${HUMANIZE_SEND:-false}
+
+      # Rate limiting (anti-ban)
+      RATE_LIMIT_ENABLED: ${RATE_LIMIT_ENABLED:-true}
+      RATE_MIN_INTERVAL_SEC: ${RATE_MIN_INTERVAL_SEC:-30}
+      RATE_GLOBAL_INTERVAL_SEC: ${RATE_GLOBAL_INTERVAL_SEC:-0}
+
+      # Media retention — auto-delete media older than N days (0 = disabled)
+      MEDIA_RETENTION_DAYS: ${MEDIA_RETENTION_DAYS:-14}
+    ports:
+      - "${APP_PORT:-8080}:8080"
+    volumes:
+      - storage:/app/storage
+      - logs:/app/logs
+
+volumes:
+  pgdata:
+  storage:
+  logs:

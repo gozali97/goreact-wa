@@ -1,0 +1,29 @@
+# Keep the Docker build context small and reproducible.
+
+# Git / editor
+.git
+.gitignore
+.idea
+.vscode
+
+# Go build artifacts & Air temp
+bin/
+tmp/
+
+# Runtime data (created inside the container)
+storage/
+logs/
+*.log
+
+# Frontend deps & previous build output (rebuilt in the image)
+apps/frontend/node_modules/
+internal/webui/dist/
+
+# The Laravel test app is not part of the wa-proxy image
+laravel-message/
+
+# Local env & docs
+.env
+.env.local
+*.md
+deploy/
